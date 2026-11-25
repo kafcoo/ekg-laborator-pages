@@ -49,14 +49,14 @@ export async function filterLab(target) {
     <div class="controls">${select("filter-section", "Úsek", options(segments))} ${select("filter-kind", "Filtr", options(filters))}</div>
     <p data-status role="status">Načítám měření…</p>
     <div id="filter-ready" hidden><p class="muted" id="filter-range"></p>${canvas("filter-full", "Vstupní a filtrovaný signál na společné časové ose", "tall")}
-    ${legend([[colors.pink, "Vstup"], [colors.mint, "Výstup při stejném měřítku"]])}
+    ${legend([[colors.alternate, "Vstup"], [colors.accent, "Výstup při stejném měřítku"]])}
     <p class="callout" id="filter-copy"></p>
     <label for="filter-position">Začátek detailu <output id="filter-time"></output></label>
     <input type="range" id="filter-position" step=".05" aria-label="Začátek detailu v sekundách">
     ${canvas("filter-zoom", "Detail vstupu a filtrovaného EKG v délce dvou sekund")}
     <p class="source">Čtvrtý úsek používá celý zbytek souboru. Rozhraní úseků je nominální, kolem přepnutí jsou přechody. Výstupy jsou vypočtené na celém záznamu metodou Butterworth SOS vpřed i vzad. Graf používá jednotky z notebooku.</p>
     ${source("Šum v EKG, s. 2–99 · ecg_filtering_student.ipynb · Místní soubor ECG_II_1000Hz_…txt")}</div></section>
-    ${card("Doplň pokus o přechodové rušení", '<div class="controls">' + select("artifact", "Artefakt", [["step","Skok izolinie"],["impulse","Impulz"],["move","Přechod při pohybu"]]) + '</div>' + canvas("artifact-plot", "Syntetické EKG s časově lokalizovaným artefaktem") + '<p class="source">Syntetický experiment. Mintově čistý cyklus, růžově cyklus se zvoleným rušením.</p>')}
+    ${card("Doplň pokus o přechodové rušení", '<div class="controls">' + select("artifact", "Artefakt", [["step","Skok izolinie"],["impulse","Impulz"],["move","Přechod při pohybu"]]) + '</div>' + canvas("artifact-plot", "Syntetické EKG s časově lokalizovaným artefaktem") + '<p class="source">Syntetický experiment. Červeně čistý cyklus, fialově cyklus se zvoleným rušením.</p>')}
     ${card("Adaptivní potlačení brumu", '<div class="controls">' + select("adaptive-mode", "Reference", [["clean","Pouze síťové rušení"],["leak","Reference obsahuje i EKG"]]) + '</div>' + canvas("adaptive-plot", "Srovnání vstupu, adaptivního výstupu a čisté syntetické reference") + '<p class="callout" id="adaptive-copy"></p><p class="source">Výukový model · adaptivní odečet dvou fázových složek 50 Hz metodou NLMS. Šum v EKG, s. 87–99.</p>')}
     ${card("Volba a vlastnosti filtru", foot(filterNotes))}</div>`;
   const $ = id => target.querySelector("#" + id);
@@ -66,7 +66,7 @@ export async function filterLab(target) {
     const noisy = clean.map((v, i) => v + (type === "step" ? (i >= 365 ? .55 : 0)
       : type === "impulse" ? (i >= 365 && i < 373 ? .95 : 0)
       : Math.exp(-.5 * ((i - 390) / 34) ** 2) * Math.sin(i * .17) * .47));
-    plot($("artifact-plot"), { series: [{ values: noisy, step: .001, color: colors.pink }, { values: clean, step: .001 }], x: [0, 1], y: [-.55, 1.35], paper: true });
+    plot($("artifact-plot"), { series: [{ values: noisy, step: .001, color: colors.alternate }, { values: clean, step: .001 }], x: [0, 1], y: [-.55, 1.35], paper: true });
   };
   $("artifact").onchange = artifact;
   artifact();
@@ -89,12 +89,12 @@ export async function filterLab(target) {
       output.push(error);
     });
     plot($("adaptive-plot"), { series: [
-      {values: mixed, step: .001, color: colors.pink}, {values: output, step: .001},
+      {values: mixed, step: .001, color: colors.alternate}, {values: output, step: .001},
       {values: reference, step: .001, color: colors.blue, dashed: true},
     ], x: [2,4], y: [-.65,1.65], events: [{time:2.5,label:"Brum zesílí"}] });
     $("adaptive-copy").textContent = leak
-      ? "Reference obsahuje kromě brumu i část EKG. Adaptivní odečet pak může oslabit užitečné vlny. Porovnej mintový výstup s modrou přerušovanou referencí."
-      : "Po skoku amplitudy brumu v 2,5 s se filtr postupně přizpůsobí. Růžová je zašuměný vstup, mintová odhad EKG a modrá přerušovaná křivka čistá reference.";
+      ? "Reference obsahuje kromě brumu i část EKG. Adaptivní odečet pak může oslabit užitečné vlny. Porovnej červený výstup s modrou přerušovanou referencí."
+      : "Po skoku amplitudy brumu v 2,5 s se filtr postupně přizpůsobí. Fialová je zašuměný vstup, červená odhad EKG a modrá přerušovaná křivka čistá reference.";
   };
   $("adaptive-mode").onchange = adaptive;
   adaptive();
@@ -107,7 +107,7 @@ export async function filterLab(target) {
     const show = (id, start, end) => {
       const x0 = Math.round(start * 1000), x1 = Math.round(end * 1000);
       const values = [data.raw.slice(x0, x1), data[kind.value].slice(x0, x1)];
-      plot($(id), { series: values.map((set, j) => ({ values: set, step: .001, start, color: j ? colors.mint : colors.pink })),
+      plot($(id), { series: values.map((set, j) => ({ values: set, step: .001, start, color: j ? colors.accent : colors.alternate })),
         x: [start, end], y: bounds(values), paper: id === "filter-zoom" });
     };
     const showZoom = () => {
@@ -154,7 +154,7 @@ export async function qrsLab(target) {
     <label for="qrs-position">Začátek okna <output id="qrs-time"></output></label><input type="range" id="qrs-position" min="0" value="0" step=".1">
     <div class="stack"><div><h3>Vstup a lokalizované značky</h3>${canvas("qrs-in", "Vstup s referenčními a detekovanými časovými značkami")}</div>
     <div><h3 id="qrs-stage-title"></h3>${canvas("qrs-mid", "Výstup zvoleného stupně detektoru")}</div></div>
-    ${legend([[colors.mint, "Pan–Tompkins · lokální značka"],[colors.pink,"Hamilton · lokální značka"],[colors.blue,"Syntetická reference"],[colors.gold,"Integrační kandidát nebo práh"]])}
+    ${legend([[colors.accent, "Pan–Tompkins · lokální značka"],[colors.alternate,"Hamilton · lokální značka"],[colors.blue,"Syntetická reference"],[colors.gold,"Integrační kandidát nebo práh"]])}
     <p class="callout" id="qrs-copy"></p><p class="source" id="qrs-delay"></p>
     <div class="controls" id="qrs-jumps"></div></div></section>
     <section class="card"><h2>Porovnání detekcí v celém zvoleném úseku</h2><div id="qrs-metrics"></div>
@@ -177,16 +177,16 @@ export async function qrsLab(target) {
     $("qrs-time").value = fmt(x[0], 2) + " s";
     const top = trace(current.input, colors.gray);
     plot($("qrs-in"), { series: [top], x, y: bounds([top.values], .15), paper: true, events: [
-      ...marks(current.pan, colors.mint, 0), ...marks(current.ham, colors.pink, 1), ...marks(current.ref, colors.blue, 2)] });
+      ...marks(current.pan, colors.accent, 0), ...marks(current.ham, colors.alternate, 1), ...marks(current.ref, colors.blue, 2)] });
     $("qrs-stage-title").textContent = name;
-    const series = [trace(current[field === "threshold" || field === "search" ? "mwi" : field], colors.mint)];
+    const series = [trace(current[field === "threshold" || field === "search" ? "mwi" : field], colors.accent)];
     const thresholdMode = field === "threshold" || field === "search";
     if (thresholdMode) {
       series.push(trace(current.threshold, colors.gold));
       if (field === "search") series.push(trace(current.threshold.map(value => value / 2), colors.gold, true));
     }
     const events = field === "search"
-      ? current.search.map(index => ({ time: offset + index / 1000, color: colors.pink, label: "Dohledáno" }))
+      ? current.search.map(index => ({ time: offset + index / 1000, color: colors.alternate, label: "Dohledáno" }))
       : marks(current.panLag, colors.gold, 0);
     plot($("qrs-mid"), { series, x, y: bounds(series.map(s => s.values)), yLabel: unit, events });
     const missed = current.ref ? matchPeaks(current.ref, current.pan).missed : [];
@@ -277,7 +277,7 @@ export async function hrvLab(target) {
     <p data-status role="status"></p><p id="hrv-origin" class="callout"></p>
     <div id="hrv-ready" class="stack" hidden><div><h3>Vrcholy R a intervaly</h3>${canvas("hrv-r", "Časové značky R a výukové EKG tam, kde je k dispozici", "short")}</div>
     <div><h3>Tachogram</h3>${canvas("tachogram", "Délka RR nebo NN v čase")}</div>
-    ${legend([[colors.blue,"Pozorované R nebo surové RR"],[colors.mint,"Použitelné NN"],[colors.pink,"Vynechaná, obnovená nebo ektopická značka"]])}
+    ${legend([[colors.blue,"Pozorované R nebo surové RR"],[colors.accent,"Použitelné NN"],[colors.alternate,"Vynechaná, obnovená nebo ektopická značka"]])}
     <div id="nn-metrics"></div><div id="hrv-table"></div>
     <a class="action" href="#detekce">Zpět k detekci QRS</a></div></section>
     <section class="card" id="hrv-extra" hidden><h2>Geometrické a spektrální zobrazení</h2><div class="controls">
@@ -311,7 +311,7 @@ export async function hrvLab(target) {
       const visible = series.slice(0, Math.ceil(.42 / df) + 1);
       plot($("hrv-plot"), { series: [{ values: visible, step: df }], x: [0, .42], y: [0, Math.max(...visible) * 1.12],
         xLabel: "Frekvence [Hz]", yLabel: "PSD [ms²/Hz]",
-        bands: [{ from: 0, to: .04, color: "#f9ce8822" }, { from: .04, to: .15, color: "#9ebeff22" }, { from: .15, to: .4, color: "#71e7bf22" }] });
+        bands: [{ from: 0, to: .04, color: "var(--chart-gold-band)" }, { from: .04, to: .15, color: "var(--chart-blue-band)" }, { from: .15, to: .4, color: "var(--chart-accent-band)" }] });
       out.textContent = `Lineární interpolace 4 Hz, Hannovo okno 128 s, 50% překrytí, odečet průměru po oknech. Použito ${windows} oken, rozlišení ${fmt(df, 5)} Hz. LF ${number(lf," ms²")}, HF ${number(hf," ms²")}, orientační VLF ${number(vlf," ms²")}. Syntetické složky jsou blízko 0,10 a 0,24 Hz.`;
       return;
     }
@@ -398,8 +398,8 @@ export async function hrvLab(target) {
       const x = [offset, Math.max(offset + .25, duration)];
       const rPlot = actual ? [{ values: actual, step: .001, start: offset, color: colors.gray }] : [];
       const marks = observed.map(time => ({ time, color: colors.blue, partial: type === "long", dash: false }));
-      if (ectopic != null) marks.push({ time: ectopic, color: colors.pink, label: "Ektopický stah" });
-      if (missing != null) marks.push({ time: missing, color: colors.pink, label: restored ? "Obnovená R" : "Vynechaná R" });
+      if (ectopic != null) marks.push({ time: ectopic, color: colors.alternate, label: "Ektopický stah" });
+      if (missing != null) marks.push({ time: missing, color: colors.alternate, label: restored ? "Obnovená R" : "Vynechaná R" });
       plot($("hrv-r"), { series: rPlot, x, y: actual ? bounds([actual]) : [-.2, 1], yLabel: actual ? "Napětí [mV]" : "Časové značky R", yNames: actual ? undefined : {} ,
         events: marks });
       const rrTrace = { times: observed.slice(1), values: rr, dots: true, color: colors.blue };
@@ -452,7 +452,7 @@ export async function opticalLab(target) {
     ${card("Dvě cesty perfuze", `<h3>Langendorff</h3><ol class="chain" aria-label="Tok při Langendorffově perfuzi"><li>Vstup do aorty</li><li>Koronární ústí</li><li>Koronární tepny</li></ol>
     <h3>Pracující srdce</h3><ol class="chain" aria-label="Tok do pracujícího srdce"><li>Vstup do levé síně</li><li>Levá komora</li><li>Aorta a zátěž</li></ol>
     <p class="source">Schéma toku roztoku · Optical mapping, sn. 17–20</p>`)}
-    ${card("Pohyb ve stopě kamery", '<div class="controls"><label><input type="checkbox" id="opt-move" checked> Přidat pohyb</label></div>' + canvas("opt-artifact", "Syntetická změna fluorescence s artefaktem pohybu", "short") + '<p class="source">Modrá křivka je výukový optický AP. Růžová zahrnuje změnu jasu při posunu tkáně v průběhu plató. Data z kamery výše zůstávají měřenou stopou.</p>')}
+    ${card("Pohyb ve stopě kamery", '<div class="controls"><label><input type="checkbox" id="opt-move" checked> Přidat pohyb</label></div>' + canvas("opt-artifact", "Syntetická změna fluorescence s artefaktem pohybu", "short") + '<p class="source">Modrá křivka je výukový optický AP. Fialová zahrnuje změnu jasu při posunu tkáně v průběhu plató. Data z kamery výše zůstávají měřenou stopou.</p>')}
     </div>
     ${card("Perfuze a optická cesta", foot(opticalNotes) + source("Optical mapping, sn. 2–65 · ap_propagation_rat.ipynb · Zápočet, s. 4"))}</div>`;
   const $ = id => target.querySelector("#" + id);
@@ -472,7 +472,7 @@ export async function opticalLab(target) {
     });
     const motion = ideal.map((value, i) => value + .93 * Math.exp(-.5 * ((i * step - .19) / .029) ** 2));
     const series = [{values: ideal, step, color: colors.blue}];
-    if ($("opt-move").checked) series.push({values: motion, step, color: colors.pink});
+    if ($("opt-move").checked) series.push({values: motion, step, color: colors.alternate});
     plot($("opt-artifact"), { series, x: [0, .48], y: [-.1, 2.9], yLabel: "Relativní změna [%]" });
   };
   $("opt-move").onchange = optMotion;
@@ -500,8 +500,8 @@ export async function opticalLab(target) {
       $("frame-value").value = frame;
       frameSlider.disabled = mode === "activation";
       const buffer = ctx.createImageData(edge, edge);
-      const palette = mode === "activation" ? [[40,62,130],[38,172,153],[247,197,117]] :
-        mode === "delta" ? [[82,113,212],[18,28,37],[255,145,118]] : [[18,28,37],[77,141,150],[233,248,240]];
+      const palette = mode === "activation" ? [[40,62,130],[147,100,177],[247,197,117]] :
+        mode === "delta" ? [[82,113,212],[18,28,37],[255,145,118]] : [[18,28,37],[119,111,143],[247,238,250]];
       for (let i = 0; i < area; i++) {
         const base = signal[area + i], raw = signal[frame * area + i];
         const value = mode === "activation" ? (activation[i] - 25) / 45

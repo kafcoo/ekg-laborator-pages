@@ -1,4 +1,7 @@
-export const colors = { mint: "#71e7bf", pink: "#ff9ba4", blue: "#9ebeff", gold: "#f9ce88", gray: "#aabcc8" };
+export const colors = {
+  accent: "var(--accent)", alternate: "var(--chart-alt)", blue: "var(--chart-blue)",
+  gold: "var(--chart-gold)", gray: "var(--muted)",
+};
 export const fmt = (x, digits = 1) => Number(x).toLocaleString("cs-CZ", { maximumFractionDigits: digits });
 export const select = (id, label, items) => `<label for="${id}">${label} <select id="${id}">${items.map(([value, name]) => `<option value="${value}">${name}</option>`).join("")}</select></label>`;
 export const canvas = (id, label, size = "") => `<canvas id="${id}" class="plot ${size}" role="img" aria-label="${label}">${label}</canvas>`;
@@ -8,6 +11,12 @@ export const legend = items => `<div class="legend">${items.map(([color, label])
 
 let observer;
 const plots = new Map();
+let themeStyles;
+
+export function redrawPlots() {
+  themeStyles = undefined;
+  for (const [element, config] of plots) draw(element, config);
+}
 export function clearPlots() {
   observer?.disconnect();
   plots.clear();
@@ -45,6 +54,8 @@ function draw(el, options) {
     el.width = Math.round(width * ratio);
     el.height = Math.round(height * ratio);
   }
+  themeStyles ??= getComputedStyle(document.documentElement);
+  const paint = color => color.startsWith("var(") ? themeStyles.getPropertyValue(color.slice(4, -1)).trim() : color;
   const ctx = el.getContext("2d");
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
   ctx.clearRect(0, 0, width, height);
@@ -52,7 +63,7 @@ function draw(el, options) {
   const px = value => left + (value - x[0]) / (x[1] - x[0]) * (right - left);
   const py = value => bottom - (value - y[0]) / (y[1] - y[0]) * (bottom - top);
   const line = (x1, y1, x2, y2, color) => {
-    ctx.strokeStyle = color;
+    ctx.strokeStyle = paint(color);
     ctx.beginPath();
     ctx.moveTo(x1, y1);
     ctx.lineTo(x2, y2);
@@ -61,7 +72,7 @@ function draw(el, options) {
   const xs = ticks(...x, width < 440 ? 4 : 8);
   const ys = yNames ? Object.keys(yNames).map(Number) : ticks(...y, 5);
   ctx.font = "11px system-ui";
-  ctx.fillStyle = colors.gray;
+  ctx.fillStyle = paint(colors.gray);
   ctx.textBaseline = "middle";
   ctx.textAlign = "left";
   ctx.fillText(yLabel, 9, 11);
@@ -72,22 +83,22 @@ function draw(el, options) {
   if (paper) {
     const horizontal = width / (x[1] - x[0]) > 290 ? .04 : .2;
     for (let t = Math.ceil(x[0] / horizontal) * horizontal; t <= x[1] + 1e-8; t += horizontal) {
-      line(px(t), top, px(t), bottom, "#263845");
+      line(px(t), top, px(t), bottom, "var(--plot-grid-fine)");
     }
     const voltageGrid = (bottom - top) / (y[1] - y[0]) >= 73 ? .1 : .2;
     for (let v = Math.ceil(y[0] / voltageGrid) * voltageGrid; v <= y[1] + 1e-8; v += voltageGrid) {
-      line(left, py(v), right, py(v), "#263845");
+      line(left, py(v), right, py(v), "var(--plot-grid-fine)");
     }
   }
-  for (const v of ys) line(left, py(v), right, py(v), "#334755");
-  for (const t of xs) line(px(t), top, px(t), bottom, "#334755");
+  for (const v of ys) line(left, py(v), right, py(v), "var(--plot-grid)");
+  for (const t of xs) line(px(t), top, px(t), bottom, "var(--plot-grid)");
   for (const { from, to, color } of bands) {
-    ctx.fillStyle = color;
+    ctx.fillStyle = paint(color);
     ctx.fillRect(px(from), top, px(to) - px(from), bottom - top);
   }
   for (const trace of series) {
-    const { values, times, step = 1, start = 0, color = colors.mint, dots, bars, dashed } = trace;
-    ctx.strokeStyle = ctx.fillStyle = color;
+    const { values, times, step = 1, start = 0, color = colors.accent, dots, bars, dashed } = trace;
+    ctx.strokeStyle = ctx.fillStyle = paint(color);
     ctx.lineWidth = trace.width ?? 1.65;
     ctx.setLineDash(dashed ? [5, 4] : []);
     ctx.beginPath();
@@ -124,7 +135,7 @@ function draw(el, options) {
     line(px(from), yy, px(to), yy, color);
     for (const edge of [from, to]) line(px(edge), yy - 4, px(edge), yy + 4, color);
     if (label && px(to) - px(from) > ctx.measureText(label).width + 6) {
-      ctx.fillStyle = color;
+      ctx.fillStyle = paint(color);
       ctx.textAlign = "center";
       ctx.fillText(label, (px(from) + px(to)) / 2, yy - 8);
     }
@@ -132,17 +143,17 @@ function draw(el, options) {
   ctx.restore();
   for (const { time, label, color = colors.gold, lane = 0 } of events) {
     if (!label || time < x[0] || time > x[1]) continue;
-    ctx.fillStyle = color;
+    ctx.fillStyle = paint(color);
     ctx.textAlign = "left";
     const textWidth = ctx.measureText(label).width;
     const tx = Math.max(left, Math.min(px(time) + 4, right - textWidth - 2));
     const ty = top + 8 + lane * 14;
-    ctx.fillStyle = "#121c25";
+    ctx.fillStyle = paint("var(--plot)");
     ctx.fillRect(tx - 2, ty - 6, textWidth + 4, 12);
-    ctx.fillStyle = color;
+    ctx.fillStyle = paint(color);
     ctx.fillText(label, tx, ty);
   }
-  ctx.fillStyle = colors.gray;
+  ctx.fillStyle = paint(colors.gray);
   ctx.textAlign = "right";
   for (const v of ys) ctx.fillText(yNames?.[v] ?? fmt(v, 5), left - 5, py(v));
   ctx.textAlign = "center";

@@ -1,10 +1,25 @@
-import { canvas, colors, details, fmt, legend, plot, select, clearPlots } from "./plot.js";
+import { canvas, colors, details, fmt, legend, plot, select, clearPlots, redrawPlots } from "./plot.js";
 import { atlas, normalCycle, sample, sinus } from "./rhythms.js";
 import { anatomy, leadNotes, acquisition, curriculum, questions } from "./lessons.js";
 import { filterLab, qrsLab, hrvLab, opticalLab } from "./labs.js";
 
 const $ = id => document.getElementById(id);
 const view = $("view");
+const themeToggle = $("theme-toggle");
+const theme = document.documentElement.dataset;
+const updateThemeToggle = () => {
+  const dark = theme.theme === "dark";
+  themeToggle.setAttribute("aria-pressed", String(dark));
+  document.querySelector('meta[name="theme-color"]').content = dark ? "#17181c" : "#f7f4f5";
+};
+themeToggle.onclick = () => {
+  theme.theme = theme.theme === "dark" ? "light" : "dark";
+  try { localStorage.setItem("ekg-theme", theme.theme); } catch {}
+  updateThemeToggle();
+  redrawPlots();
+};
+updateThemeToggle();
+themeToggle.hidden = false;
 const card = (title, body) => `<section class="card"><h2>${title}</h2>${body}</section>`;
 const noteCards = notes => `<div class="details-grid">${notes.map(([title, text]) => details(title, text)).join("")}</div>`;
 const source = text => `<p class="source">Podklady · ${text}</p>`;
@@ -57,16 +72,16 @@ window.addEventListener("hashchange", () => {
 function heartMap(flow = false) {
   return `<svg class="map" viewBox="0 0 400 305" role="img" aria-label="${flow ? "Schéma čtyř srdečních dutin a směru toku" : "Schéma srdce a drah převodního systému"}">
     <defs><marker id="flow-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker></defs>
-    <path d="M175 64 C170 35 177 18 194 14 C226 3 254 17 261 39 L262 72 M155 72 L140 18 M212 79 L232 44 C247 34 274 41 294 62" fill="none" stroke="#3d5669" stroke-width="12" stroke-linecap="round"/>
-    <path d="M192 81 C155 34 103 55 92 100 C72 174 135 228 207 280 C222 291 237 284 252 267 C303 209 322 149 299 104 C280 67 241 65 217 94 Z" fill="#233848" stroke="#547082" stroke-width="2"/>
-    <path d="M102 149 Q147 127 191 154 Q160 199 130 210 M202 157 Q235 121 307 136 M203 160 Q230 228 218 283" fill="none" stroke="#587184" stroke-width="2"/>
-    <path d="M120 164 Q151 159 177 173 M234 162 Q268 145 293 153" fill="none" stroke="#7290a0" stroke-width="4" stroke-linecap="round"/>
+    <path d="M175 64 C170 35 177 18 194 14 C226 3 254 17 261 39 L262 72 M155 72 L140 18 M212 79 L232 44 C247 34 274 41 294 62" fill="none" stroke="var(--map-stroke)" stroke-width="12" stroke-linecap="round"/>
+    <path d="M192 81 C155 34 103 55 92 100 C72 174 135 228 207 280 C222 291 237 284 252 267 C303 209 322 149 299 104 C280 67 241 65 217 94 Z" fill="var(--map-fill)" stroke="var(--map-stroke)" stroke-width="2"/>
+    <path d="M102 149 Q147 127 191 154 Q160 199 130 210 M202 157 Q235 121 307 136 M203 160 Q230 228 218 283" fill="none" stroke="var(--map-stroke)" stroke-width="2"/>
+    <path d="M120 164 Q151 159 177 173 M234 162 Q268 145 293 153" fill="none" stroke="var(--map-stroke)" stroke-width="4" stroke-linecap="round"/>
     ${flow ? `
-    <g fill="none" stroke="#9ebeff" stroke-width="4" marker-end="url(#flow-arrow)">
+    <g fill="none" stroke="var(--chart-blue)" stroke-width="4" marker-end="url(#flow-arrow)">
       <path data-route="0" d="M137 19 L148 89 Q155 110 145 142"/>
       <path data-route="1" d="M145 146 Q145 166 168 184 Q173 191 167 210"/>
       <path data-route="2" d="M166 211 Q200 185 205 135 Q204 66 278 53"/>
-    </g><g fill="none" stroke="#ff9ba4" stroke-width="4" marker-end="url(#flow-arrow)">
+    </g><g fill="none" stroke="var(--accent)" stroke-width="4" marker-end="url(#flow-arrow)">
       <path data-route="3" d="M299 75 Q273 84 258 117"/>
       <path data-route="4" d="M258 117 Q233 139 252 168 L262 213"/>
       <path data-route="5" d="M263 215 Q218 213 221 163 L224 61 Q225 23 251 36"/>
@@ -74,13 +89,13 @@ function heartMap(flow = false) {
     <text x="22" y="95">Pravá síň</text><text x="20" y="217">Pravá komora</text>
     <text x="306" y="122">Levá síň</text><text x="289" y="229">Levá komora</text>
     ` : `
-    <g data-route="0"><circle cx="130" cy="85" r="8" fill="#71e7bf"/><path d="M123 83 L72 64 H24" fill="none" stroke="#719387"/><text x="23" y="57">SA uzel</text></g>
-    <g data-route="1"><path d="M132 87 Q170 82 190 104 Q223 77 258 106 M131 92 Q137 117 174 132 M139 92 Q166 94 177 132" fill="none" stroke="#71e7bf" stroke-width="3" stroke-dasharray="4 4"/><text x="244" y="76">Bachmannův</text><text x="244" y="92">svazek</text></g>
-    <g data-route="2"><circle cx="179" cy="138" r="7" fill="#f9ce88"/><path d="M167 136 L80 123 H23" fill="none" stroke="#aa966f"/><text x="23" y="115">AV uzel</text></g>
-    <g data-route="3"><path d="M181 140 Q189 154 194 164" fill="none" stroke="#f9ce88" stroke-width="5" stroke-linecap="round"/><path d="M194 154 L246 125 H316" fill="none" stroke="#aa966f"/><text x="307" y="119">Hisův</text><text x="306" y="135">svazek</text></g>
-    <g data-route="4"><path d="M194 164 Q181 193 179 218 M194 164 Q213 188 221 247 M208 192 Q226 209 245 218" fill="none" stroke="#9ebeff" stroke-width="4" stroke-linecap="round"/><path d="M208 183 L265 174 H321" fill="none" stroke="#7d94bd"/><text x="304" y="167">Raménka</text><text x="304" y="184">a fascikly</text></g>
-    <g data-route="5"><path d="M179 218 Q157 208 143 190 M179 218 Q170 226 160 228 M222 247 Q241 259 271 214 M245 218 Q262 221 278 191 M242 245 Q264 239 280 227" fill="none" stroke="#71e7bf" stroke-width="3" stroke-linecap="round"/><path d="M267 227 L307 247 H362" fill="none" stroke="#719387"/><text x="279" y="264">Purkyňova vlákna</text></g>
-    <path data-route="6" d="M116 171 C127 210 163 242 213 275 C235 281 272 232 293 176" fill="none" stroke="#ff9ba4" stroke-width="5" stroke-linecap="round"/>
+    <g data-route="0"><circle cx="130" cy="85" r="8" fill="var(--accent)"/><path d="M123 83 L72 64 H24" fill="none" stroke="var(--accent-border)"/><text x="23" y="57">SA uzel</text></g>
+    <g data-route="1"><path d="M132 87 Q170 82 190 104 Q223 77 258 106 M131 92 Q137 117 174 132 M139 92 Q166 94 177 132" fill="none" stroke="var(--accent)" stroke-width="3" stroke-dasharray="4 4"/><text x="244" y="76">Bachmannův</text><text x="244" y="92">svazek</text></g>
+    <g data-route="2"><circle cx="179" cy="138" r="7" fill="var(--chart-gold)"/><path d="M167 136 L80 123 H23" fill="none" stroke="var(--chart-gold)"/><text x="23" y="115">AV uzel</text></g>
+    <g data-route="3"><path d="M181 140 Q189 154 194 164" fill="none" stroke="var(--chart-gold)" stroke-width="5" stroke-linecap="round"/><path d="M194 154 L246 125 H316" fill="none" stroke="var(--chart-gold)"/><text x="307" y="119">Hisův</text><text x="306" y="135">svazek</text></g>
+    <g data-route="4"><path d="M194 164 Q181 193 179 218 M194 164 Q213 188 221 247 M208 192 Q226 209 245 218" fill="none" stroke="var(--chart-blue)" stroke-width="4" stroke-linecap="round"/><path d="M208 183 L265 174 H321" fill="none" stroke="var(--chart-blue)"/><text x="304" y="167">Raménka</text><text x="304" y="184">a fascikly</text></g>
+    <g data-route="5"><path d="M179 218 Q157 208 143 190 M179 218 Q170 226 160 228 M222 247 Q241 259 271 214 M245 218 Q262 221 278 191 M242 245 Q264 239 280 227" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round"/><path d="M267 227 L307 247 H362" fill="none" stroke="var(--accent-border)"/><text x="279" y="264">Purkyňova vlákna</text></g>
+    <path data-route="6" d="M116 171 C127 210 163 242 213 275 C235 281 272 232 293 176" fill="none" stroke="var(--chart-alt)" stroke-width="5" stroke-linecap="round"/>
     `}
   </svg>`;
 }
@@ -134,10 +149,10 @@ function conduction(target) {
     $("next").disabled = time >= 640;
     plot($("cycle"), { series: [{ values: signal, step: .002 }], x: [0, .85], y: [-.4, 1.25], paper: true,
       events: [{ time: time / 1000, dash: false, color: colors.gold },
-        { time: .15, label: "P", color: colors.mint, labelOnly: true },
+        { time: .15, label: "P", color: colors.accent, labelOnly: true },
         { time: .285, label: "QRS", color: colors.blue, labelOnly: true },
-        { time: .52, label: "T", color: colors.pink, labelOnly: true }],
-      bands: [{ from: .12, to: .21, color: "#71e7bf14" }, { from: .28, to: .37, color: "#9ebeff1c" }, { from: .452, to: .64, color: "#ff9ba413" }] });
+        { time: .52, label: "T", color: colors.alternate, labelOnly: true }],
+      bands: [{ from: .12, to: .21, color: "var(--chart-accent-band)" }, { from: .28, to: .37, color: "var(--chart-blue-band)" }, { from: .452, to: .64, color: "var(--chart-alt-band)" }] });
   };
   const stop = () => {
     cancelAnimationFrame(frame);
@@ -211,12 +226,12 @@ function rhythmAtlas(target) {
     <section class="card" id="ladder-panel" hidden><h2>Žebříčkový diagram</h2>
     <div class="controls">${option("ladder-back", "Předchozí vrstva")}${option("ladder-next", "Další vrstva")}</div>
     <p id="ladder-copy" aria-live="polite"></p>${canvas("ladder", "Žebříček se síňovou, převodní a komorovou úrovní", "short")}
-    ${legend([[colors.mint,"Pozorovaná P a QRS"], [colors.gold,"Odvozený převod nebo místo bloku"], [colors.blue,"Modelový impulz SA uzlu"]])}</section></div>`;
+    ${legend([[colors.accent,"Pozorovaná P a QRS"], [colors.gold,"Odvozený převod nebo místo bloku"], [colors.blue,"Modelový impulz SA uzlu"]])}</section></div>`;
   $("reveal").className = "primary";
   let scene = atlas.sinus, revealed = false, ladderOn = false, level = 0;
   const ascent = () => {
     const ref = sinus(Math.ceil(scene.duration / .86));
-    const annotations = revealed ? (scene.eventsMark ?? [[scene.focus, "Studovaný stah"]]).map(([time, label], i) => ({ time, label, lane: i % 2, color: i ? colors.gold : colors.pink })) : [];
+    const annotations = revealed ? (scene.eventsMark ?? [[scene.focus, "Studovaný stah"]]).map(([time, label], i) => ({ time, label, lane: i % 2, color: i ? colors.gold : colors.alternate })) : [];
     const brackets = revealed ? (scene.brackets ?? []).map(([from, to, label]) => ({ from, to, label })) : [];
     $("atlas-origin").textContent = `Syntetické výukové průběhy · ${scene.leads.join(" a ")} · ${fmt(scene.duration)} s · stejné měřítko v každé dvojici`;
     $("strips").innerHTML = scene.leads.map((lead, i) => `<div class="stack">
@@ -226,7 +241,7 @@ function rhythmAtlas(target) {
     scene.leads.forEach((lead, i) => {
       const x = [0, scene.duration], y = [-1.25, 1.35];
       plot($("ref-" + i), { series: [{ values: sample(ref, lead, ...x), step: .002 }], x, y, paper: true });
-      plot($("case-" + i), { series: [{ values: sample(scene.events, lead, ...x), step: .002, color: colors.pink }], x, y, paper: true, events: annotations, brackets });
+      plot($("case-" + i), { series: [{ values: sample(scene.events, lead, ...x), step: .002, color: colors.alternate }], x, y, paper: true, events: annotations, brackets });
     });
     $("rhythm-explanation").hidden = !revealed;
     $("reveal").textContent = revealed ? "Skrýt vysvětlení" : "Zobrazit vysvětlení";
@@ -246,8 +261,8 @@ function rhythmAtlas(target) {
       plot($(id), { series: [{ values: sample(data, chosen, ...x), start: x[0], step: .002, color }], x,
         y: [-1.25, 1.35], paper: true, events: marks });
     };
-    zoom("zoom-ref", ref, refQ.t, colors.mint, [{ time: refQ.t, label: "Začátek QRS" }]);
-    zoom("zoom-case", scene.events, scene.focus, colors.pink, annotations);
+    zoom("zoom-ref", ref, refQ.t, colors.accent, [{ time: refQ.t, label: "Začátek QRS" }]);
+    zoom("zoom-case", scene.events, scene.focus, colors.alternate, annotations);
   };
   const ladder = () => {
     $("ladder-panel").hidden = !ladderOn;
@@ -263,7 +278,7 @@ function rhythmAtlas(target) {
     ][level];
     $("ladder-copy").setAttribute("aria-label", labels[level] + ". " + $("ladder-copy").textContent);
     const track = (times, values, color, dots = false, dashed = false) => tracks.push({ times, values, color, dots, dashed });
-    const mark = (time, row) => track([time, time], [row - .12, row + .12], colors.mint);
+    const mark = (time, row) => track([time, time], [row - .12, row + .12], colors.accent);
     p.forEach(({ t }) => mark(t, 2));
     if (level >= 1) q.forEach(({ t }) => mark(t, 0));
     const cross = (t, y, color) => {
@@ -322,9 +337,9 @@ function leadPage(target) {
   });
   target.innerHTML = `<div class="stack"><div class="grid feature">
     ${card("Šestiosý systém", `<svg class="map" viewBox="0 0 360 312" role="img" aria-label="Šest končetinových os, okamžitý vektor a jeho výuková smyčka">
-      <circle cx="180" cy="156" r="114" fill="#121c25" stroke="#547082"/>
-      <g id="lead-axes"></g><path id="vcg-loop" fill="none" stroke="${colors.blue}" stroke-width="2"/><path id="mean-axis" fill="none" stroke="${colors.mint}" stroke-width="3"/><circle id="axis-end" r="4" fill="${colors.mint}"/>
-    </svg>` + '<label for="axis">Elektrická osa <output id="angle-value"></output></label><input id="axis" type="range" min="-180" max="180" value="60"><p id="axis-hint" class="callout" aria-live="polite"></p>' + legend([[colors.mint, "Výsledný směr"], [colors.blue, "Schematická smyčka QRS"]]))}
+      <circle cx="180" cy="156" r="114" fill="var(--plot)" stroke="var(--map-stroke)"/>
+      <g id="lead-axes"></g><path id="vcg-loop" fill="none" stroke="${colors.blue}" stroke-width="2"/><path id="mean-axis" fill="none" stroke="${colors.accent}" stroke-width="3"/><circle id="axis-end" r="4" fill="${colors.accent}"/>
+    </svg>` + '<label for="axis">Elektrická osa <output id="angle-value"></output></label><input id="axis" type="range" min="-180" max="180" value="60"><p id="axis-hint" class="callout" aria-live="polite"></p>' + legend([[colors.accent, "Výsledný směr"], [colors.blue, "Schematická smyčka QRS"]]))}
     ${card("Projekce téhož modelového stahu", '<div class="controls">' + select("lead-order", "Řazení", [["regular","Standardní"],["cabrera","Cabrera"]]) + select("lead-active", "Zobrazený svod", []) + '</div>' + canvas("projection", "Modelová projekce QRS") + '<div id="lead-values" class="table-wrap"></div>')}
     </div>${card("Jak vzniká dvanáct svodů", noteCards(leadNotes) + source('Lead systems, sn. 2–46 · Zápočet, s. 1 · <a href="https://doi.org/10.1016/j.jacc.2007.01.024">AHA, technologie EKG a Cabrera</a>'))}</div>`;
   const update = () => {
@@ -341,7 +356,7 @@ function leadPage(target) {
     $("lead-axes").innerHTML = leads.map(name => {
       const angle = directions[name];
       const far = radial(angle, 114), label = radial(angle, 132), near = radial(angle + 180, 114);
-      const active = name === selected ? colors.gold : "#587184";
+      const active = name === selected ? colors.gold : "var(--map-stroke)";
       return `<line x1="${near[0]}" y1="${near[1]}" x2="${far[0]}" y2="${far[1]}" stroke="${active}" stroke-width="1"/><text x="${label[0]}" y="${label[1] + 4}" text-anchor="middle">${name}</text>`;
     }).join("");
     const projected = loop.map(([x, y]) => [
@@ -390,8 +405,8 @@ function acquisitionPage(target) {
     const clean = sample(normalCycle, "II", 0, .85, 1000);
     const output = clean.map((v, i) => v + residue * Math.sin(2 * Math.PI * 50 * i / 1000));
     $("cmrr-value").value = cmrr + " dB";
-    $("amp-copy").textContent = `Model vztažený na vstup. Ze souhlasného brumu 120 mV zbývá ${fmt(residue, 4)} mV. Mintová křivka ukazuje čistou diferenciální složku, růžová výstup s reziduem.`;
-    plot($("amp"), { series: [{ values: output, step: .001, color: colors.pink }, { values: clean, step: .001 }], x: [0, .85], y: [-1.5, 1.8] });
+    $("amp-copy").textContent = `Model vztažený na vstup. Ze souhlasného brumu 120 mV zbývá ${fmt(residue, 4)} mV. Červená křivka ukazuje čistou diferenciální složku, fialová výstup s reziduem.`;
+    plot($("amp"), { series: [{ values: output, step: .001, color: colors.alternate }, { values: clean, step: .001 }], x: [0, .85], y: [-1.5, 1.8] });
   };
   $("cmrr").oninput = update;
   step(0);
