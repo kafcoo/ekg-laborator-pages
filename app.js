@@ -3,6 +3,7 @@ import { canvas, colors, details, fmt, legend, plot, select, clearPlots, redrawP
 import { atlas, normalCycle, sample, sinus } from "./rhythms.js";
 import { anatomy, leadNotes, acquisition, curriculum, questions } from "./lessons.js";
 import { anatomyExplorer, mountAnatomyExplorer, tissueOverlay, tissuePlayback } from "./heart.js";
+import { renderAtlasPair } from "./atlas-comparison.js";
 import { filterLab, qrsLab, hrvLab, opticalLab } from "./labs.js";
 
 const $ = id => document.getElementById(id);
@@ -43,7 +44,7 @@ const option = (id, text) => `<button type="button" id="${id}">${text}</button>`
 
 const pages = {
   vedeni: [t("Převodní systém"), "⌁", t("Sleduj cestu vzruchu srdcem a jeho stopu ve svodu II. Přehraj jeden srdeční cyklus nebo jej projdi krok po kroku."), conduction],
-  atlas: [t("Atlas rytmů"), "≋", t("Porovnej výukový rytmus se sinusovou referencí. Nejdřív si všimni polohy vln a pravidelnosti, pak odkryj vysvětlení."), rhythmAtlas],
+  atlas: [t("Atlas rytmů"), "≋", t("Vyber libovolné dva rytmy. Porovnej jejich vlny na společné ose a pak si odkryj intervaly, mechanismus a rozlišovací znaky."), rhythmAtlas],
   anatomie: [t("Anatomie a oběh"), "♡", t("Projdi cestu krve oběma polovinami srdce a sleduj, které chlopně se během cyklu otevírají."), anatomyPage],
   svody: [t("Svody a elektrická osa"), "⊕", t("Otoč elektrickým vektorem a porovnej projekce téhož stahu v šesti končetinových svodech."), leadPage],
   snimani: [t("Snímání EKG"), "⊢", t("Sleduj signál od kontaktu elektrody s kůží přes zesílení a filtraci až po digitální vzorek."), acquisitionPage],
@@ -253,57 +254,35 @@ function anatomyPage(target) {
 
 function rhythmAtlas(target) {
   const groups = Object.groupBy(Object.entries(atlas), ([, item]) => item.group);
+  const options = Object.entries(groups).map(([group, items]) =>
+    `<optgroup label="${group}">${items.map(([key, {name}]) => `<option value="${key}">${name}</option>`).join("")}</optgroup>`).join("");
   target.innerHTML = t`<div class="stack"><section class="card">
-    <div class="controls"><label for="case">Příklad <select id="case">${Object.entries(groups).map(([group, items]) =>
-      `<optgroup label="${group}">${items.map(([key, {name}]) => `<option value="${key}">${name}</option>`).join("")}</optgroup>`).join("")}</select></label>
-    ${option("reveal", t("Zobrazit vysvětlení"))}${option("ladder-toggle", t("Otevřít žebříček"))}</div>
+    <div class="grid atlas-selectors">
+      <label for="case">První rytmus<select id="case">${options}</select></label>
+      <label for="compare-case">Druhý rytmus<select id="compare-case">${options}</select></label>
+    </div>
+    <div class="controls">${option("reveal", t("Zobrazit vysvětlení"))}
+    ${option("swap-rhythms", t("Prohodit rytmy"))}${option("ladder-toggle", t("Otevřít žebříček"))}</div>
     <p class="muted" id="atlas-origin"></p><div id="strips" class="stack"></div></section>
     <section class="card" id="rhythm-explanation" hidden></section>
-    <section class="card" id="ladder-panel" hidden><h2>Žebříčkový diagram</h2>
+    <section class="card" id="ladder-panel" hidden><h2>Žebříčkový diagram</h2><p id="ladder-rhythm" class="muted"></p>
     <div class="controls">${option("ladder-back", t("Předchozí vrstva"))}${option("ladder-next", t("Další vrstva"))}</div>
     <p id="ladder-copy" aria-live="polite"></p>${canvas("ladder", t("Žebříček se síňovou, převodní a komorovou úrovní"), "short")}
     ${legend([[colors.accent,t("Pozorovaná P a QRS")], [colors.gold,t("Odvozený převod nebo místo bloku")], [colors.blue,t("Modelový impulz SA uzlu")]])}</section></div>`;
   $("reveal").className = "primary";
-  let scene = atlas.sinus, revealed = false, ladderOn = false, level = 0;
-  const ascent = () => {
-    const ref = sinus(Math.ceil(scene.duration / .86));
-    const annotations = revealed ? (scene.eventsMark ?? [[scene.focus, t("Studovaný stah")]]).map(([time, label], i) => ({ time, label, lane: i % 2, color: i ? colors.gold : colors.alternate })) : [];
-    const brackets = revealed ? (scene.brackets ?? []).map(([from, to, label]) => ({ from, to, label })) : [];
-    $("atlas-origin").textContent = t`Syntetické výukové průběhy · ${scene.leads.join(t(" a "))} · ${fmt(scene.duration)} s · stejné měřítko v každé dvojici`;
-    $("strips").innerHTML = scene.leads.map((lead, i) => t`<div class="stack">
-      <div><h3>Sinusová reference · ${lead}</h3>${canvas("ref-" + i, t("Sinusová reference ve svodu ") + lead, "short")}</div>
-      <div><h3>${scene.name} · ${lead}</h3>${canvas("case-" + i, t("Studovaný rytmus ve svodu ") + lead, "short")}</div>
-    </div>`).join("");
-    scene.leads.forEach((lead, i) => {
-      const x = [0, scene.duration], y = [-1.25, 1.35];
-      plot($("ref-" + i), { series: [{ values: sample(ref, lead, ...x), step: .002 }], x, y, paper: true });
-      plot($("case-" + i), { series: [{ values: sample(scene.events, lead, ...x), step: .002, color: colors.alternate }], x, y, paper: true, events: annotations, brackets });
-    });
-    $("rhythm-explanation").hidden = !revealed;
+  $("case").value = "mobitz1";
+  $("compare-case").value = "mobitz2";
+  let scene = atlas.mobitz1, revealed = false, ladderOn = false, level = 0;
+  function drawPair() {
+    clearPlots();
+    renderAtlasPair(target, $("case").value, $("compare-case").value, revealed);
     $("reveal").textContent = revealed ? t("Skrýt vysvětlení") : t("Zobrazit vysvětlení");
-    if (!revealed) return;
-    const chosen = scene.leads[0];
-    const refQ = ref.q.reduce((a,b) => Math.abs(a.t-scene.focus) < Math.abs(b.t-scene.focus) ? a : b);
-    $("rhythm-explanation").innerHTML = t`<h2>Rozbor průběhu</h2>
-    <div class="details-grid"><div><h3>Kam se podívat?</h3><p>${scene.look}</p></div>
-    <div><h3>Co se změnilo?</h3><p>${scene.change}</p></div><div><h3>Jak změna vznikla?</h3><p>${scene.why}</p></div></div>
-    <div class="grid"><div><h3>Detail reference · ${chosen}</h3>${canvas("zoom-ref", t("Detail referenčního stahu"), "short")}</div><div><h3>Detail ukázky · ${chosen}</h3>${canvas("zoom-case", t("Detail označeného stahu"), "short")}</div></div>
-    ${source(t`Arytmologie, sn. ${scene.slides} · syntetická výuková rekonstrukce`)}
-    ${["wpw", "mahaim", "shortpr", "av2to1", "mobitz2"].includes($("case").value) ? source(["av2to1", "mobitz2"].includes($("case").value)
-      ? t('<a href="https://doi.org/10.1161/CIR.0000000000000628">ACC/AHA/HRS · vymezení AV bloku 2:1</a>')
-      : t('<a href="https://doi.org/10.1093/eurheartj/ehz467">ESC · běžné a atypické přídatné dráhy</a> · <a href="https://pubmed.ncbi.nlm.nih.gov/6662116/">Elektrofyziologická studie krátkého PQ</a>')) : ""}`;
-    const zoom = (id, data, center, color, marks) => {
-      const x = [center - .23, center + .58];
-      plot($(id), { series: [{ values: sample(data, chosen, ...x), start: x[0], step: .002, color }], x,
-        y: [-1.25, 1.35], paper: true, events: marks });
-    };
-    zoom("zoom-ref", ref, refQ.t, colors.accent, [{ time: refQ.t, label: t("Začátek QRS") }]);
-    zoom("zoom-case", scene.events, scene.focus, colors.alternate, annotations);
-  };
+  }
   const ladder = () => {
     $("ladder-panel").hidden = !ladderOn;
     $("ladder-toggle").textContent = ladderOn ? t("Skrýt žebříček") : t("Otevřít žebříček");
     if (!ladderOn) return;
+    $("ladder-rhythm").textContent = t`První rytmus · ${scene.name}`;
     const { p, q } = scene.events;
     const tracks = [];
     const labels = ["P", "QRS", t("Obě řady s odvozeným vedením")];
@@ -354,12 +333,24 @@ function rhythmAtlas(target) {
     $("ladder-next").disabled = level === 2;
     plot($("ladder"), { series: tracks, x: [0, scene.duration], y: [-.28, 2.98], yLabel: t("Úroveň"), yNames: {0: t("Komory"), 1: t("Převod"), 2: t("Síně"), 2.67: t("SA uzel")} });
   };
-  $("case").onchange = () => { scene = atlas[$("case").value]; revealed = false; level = 0; clearPlots(); ascent(); ladder(); };
-  $("reveal").onclick = () => { revealed = !revealed; clearPlots(); ascent(); ladder(); };
+  $("case").onchange = () => {
+    scene = atlas[$("case").value];
+    level = 0;
+    drawPair();
+    ladder();
+  };
+  $("compare-case").onchange = () => { drawPair(); ladder(); };
+  $("swap-rhythms").onclick = () => {
+    const first = $("case").value;
+    $("case").value = $("compare-case").value;
+    $("compare-case").value = first;
+    $("case").onchange();
+  };
+  $("reveal").onclick = () => { revealed = !revealed; drawPair(); ladder(); };
   $("ladder-toggle").onclick = () => { ladderOn = !ladderOn; ladder(); };
   $("ladder-next").onclick = () => { level++; ladder(); };
   $("ladder-back").onclick = () => { level--; ladder(); };
-  ascent();
+  drawPair();
 }
 
 function leadPage(target) {

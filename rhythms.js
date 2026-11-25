@@ -19,6 +19,9 @@ const shapes = {
   delta: [[0, .065, .40], [.044, .116, .91], [.112, .156, -.21]],
 };
 
+const baselineShape = { V1: "normalV1", aVL: "normalAVL" };
+const beatShape = (event, lead) => event.shape?.[lead] ?? event.shape?.II ?? baselineShape[lead] ?? "normal";
+
 export function ecg(t, events, lead = "II") {
   let value = 0;
   for (const event of events.p) {
@@ -27,7 +30,7 @@ export function ecg(t, events, lead = "II") {
   }
   for (const event of events.q) {
     const start = event.t;
-    const type = event.shape?.[lead] ?? event.shape?.II ?? ({ V1: "normalV1", aVL: "normalAVL" }[lead] ?? "normal");
+    const type = beatShape(event, lead);
     for (const [left, right, amp] of shapes[type]) value += wave(t, start + left, start + right, amp);
     const tAmp = { pvc: -.31, pvcAlt: .32, rbbb1: -.24, lbbb6: -.27, lbbb1: .27, normalV1: .13, normalAVL: .12 }[type] ?? .28;
     const shift = ["pvc", "pvcAlt", "rbbb1", "rbbb6", "lbbb1", "lbbb6", "delta"].includes(type) ? .052 : 0;
@@ -74,7 +77,7 @@ export const atlas = {
     t("Změř PQ u prvních tří převedených stahů. Podívej se za čtvrtou vlnu P."),
     t("PQ roste ze 160 přes 220 na 260 ms. Po čtvrté P QRS nepřichází. Následující stah má opět PQ 160 ms."),
     t("V modelu se AV převod postupně zpomaluje a jeden síňový vzruch se na komory nepřevede."),
-    { eventsMark: [[2.89, t("Nepřevedená P")], [3.05, t("QRS podle reference")]], brackets: [[.31, .47, ""], [1.17, 1.39, ""], [2.03, 2.29, ""]] }),
+    { eventsMark: [[2.89, t("Nepřevedená P")], [3.05, t("Oblast chybějícího QRS")]], brackets: [[.31, .47, ""], [1.17, 1.39, ""], [2.03, 2.29, ""]] }),
   pac: code(t("Síňová extrasystola"), t("Extrasystoly"), "4–13",
     beats([.31, 1.17, 1.81, 2.67, 3.53, 4.39, 5.25], .16, {}, { 2: -.19 }), 1.81,
     t("Najdi časnou obrácenou P a zkontroluj následující QRS."),
@@ -140,12 +143,12 @@ export const atlas = {
   mobitz2: code(t("AV blok II. stupně · Mobitz II"), t("AV blokády"), "49–50, 54",
     beats(fixed, [.17, .17, .17, null, .17, .17, .17]), 2.89,
     t("Najdi P bez QRS a porovnej PQ sousedních převedených cyklů."), t("PQ zůstává v této ukázce 170 ms před výpadkem i po něm."),
-    t("Některé síňové impulzy se nepřevedou. Fixní poměr 2:1 sám o sobě neumožní odlišit typ I a II."), { eventsMark: [[2.89, t("Nepřevedená P")], [3.05, t("QRS podle reference")]] }),
+    t("Některé síňové impulzy se nepřevedou. Fixní poměr 2:1 sám o sobě neumožní odlišit typ I a II."), { eventsMark: [[2.89, t("Nepřevedená P")], [3.05, t("Oblast chybějícího QRS")]] }),
   av2to1: code(t("AV blok II. stupně · převod 2:1"), t("AV blokády"), "49–55",
     beats(sequence(10), [.18, null, .18, null, .18, null, .18, null, .18, null]), 2.89,
     t("Po každé druhé P vyhledej QRS; vyznač místa bez komorové aktivace."), t("Převod se pravidelně střídá 1:0. Převedené stahy mají v ukázce PQ 180 ms."),
     t("Poměr 2:1 ponechává mezi výpadky jen jedno měřitelné PQ. Z této sekvence nelze stanovit typ Mobitz I nebo II."),
-    { duration: 8.4, eventsMark: [[2.89,t("Nepřevedená P")], [3.05,t("QRS podle reference")]] }),
+    { duration: 8.4, eventsMark: [[2.89,t("Nepřevedená P")], [3.05,t("Oblast chybějícího QRS")]] }),
   high: code(t("Pokročilý AV blok · 3:1"), t("AV blokády"), "55",
     beats(sequence(12), [.17, null, null, .17, null, null, .17, null, null, .17, null, null]), 3.75,
     t("Spočítej P mezi dvěma QRS."), t("Na tři síňové impulzy se převede jeden. Sleduj pravidelné P i pomalejší QRS."),
@@ -183,3 +186,22 @@ export const atlas = {
     beats(fixed, .095), 2.125, t("Najdi PQ kratší než 120 ms a porovnej náběh QRS."), t("PQ je 95 ms a QRS začíná stejně strmě jako v referenci."),
     t("LGL je historické označení popisu krátkého PQ a normálního QRS v souvislosti s tachykardií. Z tohoto obrazce nelze určit jednotný mechanismus."))
 };
+
+// The intervals are derived from the synthetic event model, not inferred from pixels.
+export function measureRhythm(events, duration, lead) {
+  const order = (a, b) => a.t - b.t;
+  const p = events.p.filter(beat => beat.t < duration).sort(order);
+  const q = events.q.filter(beat => beat.t < duration).sort(order);
+  const ms = seconds => Math.round(seconds * 1000);
+  const spacing = beats => beats.slice(1).map((beat, i) => ms(beat.t - beats[i].t));
+  const atrialRows = p.map(beat => {
+    const conduction = q.find(qrs => qrs.p === beat.t);
+    return { p: beat.t, q: conduction?.t, pr: conduction && ms(conduction.t - beat.t) };
+  });
+  return {
+    pp: spacing(p), rr: spacing(q), pr: atrialRows.flatMap(beat => beat.pr === undefined ? [] : [beat.pr]),
+    widths: q.map(beat => ms(Math.max(...shapes[beatShape(beat, lead)].map(([, end]) => end)))),
+    atrialRows,
+    otherQrs: q.filter(beat => beat.p === undefined).map(beat => beat.t),
+  };
+}

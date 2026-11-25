@@ -228,26 +228,21 @@ footer { margin-top: 1.4rem; border-top: 1px solid var(--line); padding-top: .85
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: var(--plot);
+  background: radial-gradient(ellipse at 50% 44%, var(--card), var(--plot) 80%);
 }
-#anatomy-map { width: 100%; max-height: 460px; display: block; overflow: hidden; }
+#anatomy-map { width: 100%; max-height: 510px; display: block; overflow: hidden; }
 .anatomy-camera { transform-origin: 0 0; transition: transform .26s ease-out; }
-.anatomy-shape { cursor: pointer; stroke-linecap: round; stroke-linejoin: round; }
-.anatomy-venous {
-  stroke: color-mix(in srgb, var(--chart-blue) 75%, var(--plot));
-  fill: color-mix(in srgb, var(--chart-blue) 20%, var(--plot));
-}
-.anatomy-arterial {
-  stroke: color-mix(in srgb, var(--accent) 75%, var(--plot));
-  fill: color-mix(in srgb, var(--accent) 20%, var(--plot));
+.anatomy-art { filter: saturate(.76) drop-shadow(0 9px 10px #21132133); }
+.anatomy-shape {
+  cursor: pointer;
+  fill: transparent;
+  stroke: transparent;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .anatomy-shape[fill="none"] { fill: none; }
-.anatomy-valve { stroke: var(--chart-gold); }
-.anatomy-wall { stroke: var(--map-stroke); }
-.anatomy-shape:hover, .structure-selected { stroke: var(--accent); }
-.anatomy-shape.structure-selected:not([fill="none"]) {
-  fill: color-mix(in srgb, var(--accent) 34%, var(--plot));
-}
+.anatomy-shape:hover:not([fill="none"]), .anatomy-shape.structure-selected:not([fill="none"]) { fill: #fff3; }
+.anatomy-shape[fill="none"]:hover, .anatomy-shape[fill="none"].structure-selected { stroke: #fff4; }
 .anatomy-marker { cursor: pointer; outline: none; }
 .anatomy-marker .marker-hit { fill: transparent; }
 .anatomy-marker .marker-ring {
@@ -263,7 +258,8 @@ footer { margin-top: 1.4rem; border-top: 1px solid var(--line); padding-top: .85
 }
 .anatomy-marker:is(:hover, :focus-visible, [aria-pressed="true"]) .marker-core { fill: var(--accent); }
 .anatomy-marker:focus-visible .marker-ring { stroke: var(--chart-gold); stroke-width: 3px; }
-.anatomy-zoomed .anatomy-marker:not([aria-pressed="true"]) { opacity: .33; }
+.anatomy-zoomed .anatomy-marker:not([aria-pressed="true"]) { opacity: .24; }
+.anatomy-credit { margin-top: .35rem; }
 .anatomy-details {
   padding: .9rem 1rem;
   border: 1px solid var(--line);
@@ -278,4 +274,22 @@ footer { margin-top: 1.4rem; border-top: 1px solid var(--line); padding-top: .85
   .anatomy-side { display: flex; flex-direction: column; gap: .75rem; }
   .anatomy-side .anatomy-details { order: -1; }
   .anatomy-side .controls, .anatomy-side .source { margin: 0; }
+}
+
+.atlas-selectors { align-items: end; margin-bottom: .85rem; }
+.atlas-selectors label { display: grid; min-width: 0; gap: .25rem; }
+.atlas-selectors select { width: 100%; min-width: 0; }
+.atlas-pair { gap: .75rem; align-items: stretch; }
+.atlas-trace { min-width: 0; display: grid; grid-template-rows: minmax(2.5em, auto) auto; align-items: end; }
+.atlas-trace h3 { margin: 0 0 .35rem; }
+.atlas-metrics th { color: var(--ink); }
+.atlas-metrics tbody th { white-space: nowrap; color: var(--muted); }
+.atlas-detail-heading { margin-top: 1rem; }
+.atlas-analysis-grid { margin-top: 1rem; }
+.atlas-analysis { border-top: 1px solid var(--line); padding: .8rem 0 0; min-width: 0; }
+.atlas-analysis dt { font-weight: 750; }
+.atlas-analysis dd { margin: .15rem 0 .65rem; }
+.atlas-events table { min-width: 15rem; }
+@media (max-width: 630px) {
+  .atlas-trace { grid-template-rows: auto auto; }
 }
