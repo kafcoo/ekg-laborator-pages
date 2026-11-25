@@ -2,6 +2,7 @@ import { t, language, setLanguage } from "./i18n.js";
 import { canvas, colors, details, fmt, legend, plot, select, clearPlots, redrawPlots } from "./plot.js";
 import { atlas, normalCycle, sample, sinus } from "./rhythms.js";
 import { anatomy, leadNotes, acquisition, curriculum, questions } from "./lessons.js";
+import { anatomyExplorer, mountAnatomyExplorer, tissueOverlay, tissuePlayback } from "./heart.js";
 import { filterLab, qrsLab, hrvLab, opticalLab } from "./labs.js";
 
 const $ = id => document.getElementById(id);
@@ -90,6 +91,7 @@ function heartMap(flow = false) {
     <path d="M192 81 C155 34 103 55 92 100 C72 174 135 228 207 280 C222 291 237 284 252 267 C303 209 322 149 299 104 C280 67 241 65 217 94 Z" fill="var(--map-fill)" stroke="var(--map-stroke)" stroke-width="2"/>
     <path d="M102 149 Q147 127 191 154 Q160 199 130 210 M202 157 Q235 121 307 136 M203 160 Q230 228 218 283" fill="none" stroke="var(--map-stroke)" stroke-width="2"/>
     <path d="M120 164 Q151 159 177 173 M234 162 Q268 145 293 153" fill="none" stroke="var(--map-stroke)" stroke-width="4" stroke-linecap="round"/>
+    ${flow ? "" : tissueOverlay()}
     ${flow ? t`
     <g fill="none" stroke="var(--chart-blue)" stroke-width="4" marker-end="url(#flow-arrow)">
       <path data-route="0" d="M137 19 L148 89 Q155 110 145 142"/>
@@ -128,11 +130,19 @@ const phases = [
 function conduction(target) {
   target.innerHTML = t`<div class="stack"><div class="grid feature">
     <section class="card"><div class="card-head"><h2>Mapa vedení</h2><span class="tag">Schéma</span></div>
-    ${heartMap()}<p class="source">Srdce v čelním pohledu · levá komora je vpravo na obrázku</p></section>
+    ${heartMap()}
+    <div class="controls tissue-controls">
+      <label><input type="checkbox" id="show-tissue" checked> Svalovina</label>
+      <label><input type="checkbox" id="show-pathway" checked> Převodní dráhy</label>
+    </div>
+    ${legend([["var(--wave-front)",t("Čelo aktivace")],["var(--wave-active)",t("Depolarizovaná svalovina")],["var(--wave-recovery)",t("Repolarizace")]])}
+    <p class="source">Tečky představují oblasti svaloviny a barva jejich elektrický stav. Mechanický stah na aktivaci navazuje. Časování i rozložení vlny jsou schematické.</p>
+    <p class="source"><a href="https://pubmed.ncbi.nlm.nih.gov/5482907/">Aktivace lidského srdce · Durrer a kol.</a></p></section>
     <section class="card"><div class="card-head"><h2>Jeden sinusový cyklus</h2><span class="tag">Svod II</span></div>
     ${canvas("cycle", t("Syntetické EKG se synchronizovaným časovým kurzorem"), "tall")}
     <div class="legend">Syntetický průběh · PQ 160 ms · QRS 90 ms</div>
-    <div class="controls">${option("play", t("Přehrát cyklus"))}${option("prev", t("Předchozí"))}${option("next", t("Další krok"))}</div>
+    <div class="controls">${option("play", t("Přehrát cyklus"))}${option("prev", t("Předchozí"))}${option("next", t("Další krok"))}
+    ${select("cycle-speed", t("Tempo"), [["5",t("5× pomaleji")],["10",t("10× pomaleji")],["20",t("20× pomaleji")]])}</div>
     <label for="clock">Čas v cyklu <output id="clock-value"></output></label><input id="clock" type="range" min="0" max="850" value="0" aria-label="Čas v cyklu v milisekundách">
     </section></div>
     <section class="card"><div class="card-head"><h2>Co se právě děje</h2><span id="phase-label" class="tag"></span></div>
@@ -140,6 +150,14 @@ function conduction(target) {
     <div class="phase-buttons">${phases.map(([, name], i) => option("phase-" + i, name)).join("")}</div>
     ${source(t("Heart anatomy, sn. 43–54 · Zápočet, s. 1"))}</section>
     <div class="grid">${card(t("Změny rytmu"), t('<p>Porovnej sinusový rytmus s komorovou extrasystolou a postupnou AV blokádou.</p><a class="action" href="#atlas">Otevřít atlas</a>'))}${card(t("Krevní oběh"), t('<p>Projdi mechanický cyklus, tok krve a chlopně na samostatné vrstvě.</p><a class="action" href="#anatomie">Otevřít anatomii</a>'))}</div></div>`;
+
+  const tissue = $("tissue-layer");
+  const drawTissue = tissuePlayback(tissue);
+  const routes = [...target.querySelectorAll("[data-route]")];
+  $("show-tissue").onchange = event => { tissue.toggleAttribute("hidden", !event.target.checked); };
+  $("show-pathway").onchange = event => {
+    routes.forEach(route => route.toggleAttribute("hidden", !event.target.checked));
+  };
   const signal = sample(normalCycle, "II", 0, .85);
   const highlighted = [0, 1, 2, 3, 4, 5, 5, 6];
   let time = 0, frame, phase = -1, playing = false;
@@ -151,11 +169,12 @@ function conduction(target) {
       phase = nextPhase;
       $("phase-label").textContent = time >= 640 ? t("Mezi cykly") : phases[phase][1];
       $("phase-copy").textContent = time >= 640 ? t("Repolarizace v modelu skončila. Izolinie trvá do další síňové aktivace.") : phases[phase][2];
-      target.querySelectorAll("[data-route]").forEach(node => {
+      routes.forEach(node => {
         node.classList.toggle("route-active", time < 640 && Number(node.dataset.route) === highlighted[phase]);
       });
       phases.forEach((_, i) => $("phase-" + i).setAttribute("aria-pressed", String(i === phase && time < 640)));
     }
+    drawTissue(time);
     $("clock").value = time;
     $("clock").setAttribute("aria-valuetext", fmt(time, 0) + " ms");
     $("clock-value").value = "· " + fmt(time, 0) + " ms";
@@ -183,9 +202,11 @@ function conduction(target) {
     if (time >= 850) time = 0;
     playing = true;
     $("play").textContent = t("Pozastavit");
-    const start = performance.now(), offset = time;
+    let previous = performance.now(), progress = time;
     const animate = now => {
-      time = Math.min(850, Math.round(offset + (now - start) / 5));
+      progress += (now - previous) / Number($("cycle-speed").value);
+      previous = now;
+      time = Math.min(850, Math.round(progress));
       update();
       if (time === 850) stop();
       else frame = requestAnimationFrame(animate);
@@ -211,10 +232,11 @@ function anatomyPage(target) {
     [t("Vypuzování"), t("Pulmonální a aortální otevřené. Trojcípá a mitrální zavřené.")],
     [t("Izovolumická relaxace"), t("Všechny zavřené. Uzávěr poloměsíčitých chlopní doprovází druhá ozva.")],
   ];
-  target.innerHTML = `<div class="stack"><div class="grid feature">
+  target.innerHTML = `<div class="stack">${anatomyExplorer()}<div class="grid feature">
     ${card(t("Cesta krve"), heartMap(true) + '<div class="controls">' + option("flow-prev", t("Předchozí")) + option("flow-next", t("Další úsek")) + '</div><p id="flow-copy" class="callout" aria-live="polite"></p>')}
     ${card(t("Chlopně v průběhu cyklu"), '<div class="controls">' + select("valves", t("Fáze"), valves.map(([name], i) => [i, name])) + '</div><p id="valves-copy" class="callout" aria-live="polite"></p>' + source(t("Heart anatomy, sn. 4–54 · Zápočet, s. 1")))}
     </div>${card(t("Anatomie a fyziologie"), noteCards(anatomy))}</div>`;
+  mountAnatomyExplorer(target);
   let position = 0;
   const show = () => {
     target.querySelectorAll("[data-route]").forEach(node => node.style.opacity = Number(node.dataset.route) === position ? 1 : .22);

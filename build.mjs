@@ -2,7 +2,7 @@ import { cp, mkdir } from "node:fs/promises";
 
 const files = [
   "index.html", "style.css", "app.js", "analysis.js",
-  "labs.js", "lessons.js", "i18n.js", "english.js", "plot.js", "rhythms.js", "data",
+  "labs.js", "lessons.js", "i18n.js", "english.js", "heart.js", "plot.js", "rhythms.js", "data",
 ];
 await mkdir(new URL("./dist/", import.meta.url), { recursive: true });
 for (const file of files) {

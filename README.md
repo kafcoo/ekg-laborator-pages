@@ -13,7 +13,7 @@ Otevři [EKG laboratoř na localhostu](http://127.0.0.1:8765/). Stačí moderní
 
 ## Práce s lekcemi
 
-- **Převodní systém a anatomie.** Krokování synchronizuje mapu a kurzor na syntetickém EKG. Samostatná mapa ukazuje tok krve a stav chlopní.
+- **Převodní systém a anatomie.** Krokování synchronizuje vlnu aktivace ve svalovině s kurzorem na syntetickém EKG. V anatomickém řezu lze přiblížit části srdce a zjistit jejich názvy a funkce. Samostatná mapa ukazuje tok krve a stav chlopní.
 - **Atlas.** Vyber jeden z 28 příkladů. Po vlastním rozboru otevři vysvětlení, zvětšený stah nebo postupný žebříčkový diagram.
 - **Svody a snímání.** Otoč elektrickou osu, přepni Cabrerovo pořadí a vyzkoušej vliv CMRR na průnik brumu.
 - **Zpracování signálu.** Porovnej filtry, kroky výukové adaptace Pan–Tompkinsova detektoru a detekce metodou Hamilton. Tlačítko u detekce přenese zvolené značky do lekce HRV.
