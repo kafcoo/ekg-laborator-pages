@@ -1,8 +1,9 @@
+import { t, numberLocale } from "./i18n.js";
 export const colors = {
   accent: "var(--accent)", alternate: "var(--chart-alt)", blue: "var(--chart-blue)",
   gold: "var(--chart-gold)", gray: "var(--muted)",
 };
-export const fmt = (x, digits = 1) => Number(x).toLocaleString("cs-CZ", { maximumFractionDigits: digits });
+export const fmt = (x, digits = 1) => Number(x).toLocaleString(numberLocale, { maximumFractionDigits: digits });
 export const select = (id, label, items) => `<label for="${id}">${label} <select id="${id}">${items.map(([value, name]) => `<option value="${value}">${name}</option>`).join("")}</select></label>`;
 export const canvas = (id, label, size = "") => `<canvas id="${id}" class="plot ${size}" role="img" aria-label="${label}">${label}</canvas>`;
 export const details = (title, copy) => `<details><summary>${title}</summary><p>${copy}</p></details>`;
@@ -46,7 +47,7 @@ export function plot(el, config) {
 }
 
 function draw(el, options) {
-  const { series, x, y, xLabel = "Čas [s]", yLabel = "Napětí [mV]", events = [], bands = [], brackets = [], paper = false, yNames } = options;
+  const { series, x, y, xLabel = t("Čas [s]"), yLabel = t("Napětí [mV]"), events = [], bands = [], brackets = [], paper = false, yNames } = options;
   const width = el.clientWidth, height = el.clientHeight;
   if (width < 90 || height < 65) return;
   const ratio = Math.min(2, devicePixelRatio || 1);
