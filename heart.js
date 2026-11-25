@@ -55,55 +55,59 @@ export function tissuePlayback(layer) {
 }
 
 // Front-facing cutaway. The right heart appears on the viewer's left.
-const outline = "M190 87C146 51 98 63 83 110C65 164 98 210 141 251C164 273 183 287 200 299C217 312 241 307 255 292C293 252 329 191 325 140C321 86 276 70 238 91L212 105Z";
+const cutaway = { width: 533, height: 641 };
 const chambers = [
-  ["right-atrium", t("Pravá síň"), "Atrium dextrum", t("Přijímá odkysličenou krev z těla horní a dolní dutou žílou. Krev pokračuje přes trojcípou chlopeň do pravé komory."), [128,111,2.1],
-    "M109 83C86 101 86 131 102 155C125 146 154 142 180 153C180 125 165 96 147 85C136 78 120 76 109 83Z", "venous"],
-  ["left-atrium", t("Levá síň"), "Atrium sinistrum", t("Přijímá okysličenou krev z plic plicními žilami. Krev pokračuje přes mitrální chlopeň do levé komory."), [279,112,2.1],
-    "M237 107C251 88 287 88 301 107C312 119 316 136 314 154C291 142 261 144 239 154C234 139 230 121 237 107Z", "arterial"],
-  ["right-ventricle", t("Pravá komora"), "Ventriculus dexter", t("Při stahu vytlačuje krev přes pulmonální chlopeň do plicního kmene a dál do plic."), [147,204,1.85],
-    "M104 166C121 156 150 152 176 163C192 188 183 222 201 267C161 243 122 206 104 166Z", "venous"],
-  ["left-ventricle", t("Levá komora"), "Ventriculus sinister", t("Při stahu vytlačuje okysličenou krev přes aortální chlopeň do aorty a tělního oběhu. Její svalová stěna je silnější než u pravé komory."), [263,216,1.8],
-    "M239 166C259 151 291 151 311 166C303 209 277 255 246 286C238 295 224 294 217 286C205 257 200 218 209 194Z", "arterial"],
+  ["right-atrium", t("Pravá síň"), "Atrium dextrum", t("Přijímá odkysličenou krev z těla horní a dolní dutou žílou. Krev pokračuje přes trojcípou chlopeň do pravé komory."), [124,344,1.85],
+    "M95 291C112 258 149 254 183 284C197 311 201 354 197 379C176 402 173 430 150 447L128 478C106 463 86 431 86 399C78 354 81 315 95 291Z"],
+  ["left-atrium", t("Levá síň"), "Atrium sinistrum", t("Přijímá okysličenou krev z plic plicními žilami. Krev pokračuje přes mitrální chlopeň do levé komory."), [327,275,2.15],
+    "M278 227C315 198 374 212 393 258L403 291C379 305 358 314 339 329C315 321 289 307 270 282Z"],
+  ["right-ventricle", t("Pravá komora"), "Ventriculus dexter", t("Při stahu vytlačuje krev přes pulmonální chlopeň do plicního kmene a dál do plic."), [246,500,1.85],
+    "M154 472C181 453 215 465 244 480C276 497 319 528 355 554C360 580 313 572 287 559C216 550 174 523 150 493Z M196 400C220 378 251 403 279 410C281 432 292 458 304 482C268 460 223 452 205 435Z"],
+  ["left-ventricle", t("Levá komora"), "Ventriculus sinister", t("Při stahu vytlačuje okysličenou krev přes aortální chlopeň do aorty a tělního oběhu. Její svalová stěna je silnější než u pravé komory."), [392,464,1.8],
+    "M377 322C400 314 426 347 434 378C446 412 453 466 444 496C439 516 432 537 414 540C400 526 397 499 384 480C368 455 364 402 350 371C348 350 358 332 377 322Z"],
 ];
 const vessels = [
-  ["vena-cava", t("Duté žíly"), "Venae cavae", t("Horní dutá žíla přivádí krev z horní poloviny těla a dolní z dolní poloviny. Obě ústí do pravé síně."), [102,52,2],
-    "M101 32L111 89 M86 233C86 196 105 175 116 146", "venous", 19],
-  ["pulmonary-veins", t("Plicní žíly"), "Venae pulmonales", t("Vracejí okysličenou krev z plic do levé síně."), [330,117,2.2],
-    "M325 100L296 112 M340 132L306 132", "arterial", 15],
-  ["aorta", t("Aorta"), "Aorta", t("Odvádí okysličenou krev z levé komory do tělního oběhu. Z jejího začátku odstupují koronární tepny."), [217,42,2.05],
-    "M216 142C215 110 207 91 199 73C188 41 222 20 253 34C273 43 274 64 270 80 M211 36L207 19 M231 30L232 14 M252 35L260 20", "arterial", 20],
-  ["pulmonary-trunk", t("Plicní kmen"), "Truncus pulmonalis", t("Vede odkysličenou krev z pravé komory. Dělí se na pravou a levou plicní tepnu."), [304,72,2],
-    "M197 169C180 147 183 116 201 95C227 65 272 66 313 77", "venous", 20],
+  ["vena-cava", t("Duté žíly"), "Venae cavae", t("Horní dutá žíla přivádí krev z horní poloviny těla a dolní z dolní poloviny. Obě ústí do pravé síně."), [124,181,2],
+    "M110 89C118 129 129 195 128 248 M124 516L124 584", 32],
+  ["pulmonary-veins", t("Plicní žíly"), "Venae pulmonales", t("Vracejí okysličenou krev z plic do levé síně."), [430,218,2.15],
+    "M397 215L444 216 M406 259L448 261 M60 225L94 229 M57 264L86 260", 28],
+  ["aorta", t("Aorta"), "Aorta", t("Odvádí okysličenou krev z levé komory do tělního oběhu. Z jejího začátku odstupují koronární tepny."), [268,119,1.8],
+    "M186 239C162 166 201 115 265 114C309 115 331 132 336 152 M203 99L177 54 M268 91L274 49 M296 99L317 56 M260 577L256 605", 27],
+  ["pulmonary-trunk", t("Plicní kmen"), "Truncus pulmonalis", t("Vede odkysličenou krev z pravé komory. Dělí se na pravou a levou plicní tepnu."), [265,211,1.9],
+    "M235 351C229 304 234 220 269 195C298 172 360 171 420 192 M59 187L88 181", 42],
 ];
 const valves = [
-  ["tricuspid", t("Trojcípá chlopeň"), "Valva tricuspidalis", t("Otevírá se z pravé síně do pravé komory při plnění. Při stahu komory uzávěr brání návratu krve do síně."), [143,153,2.4],
-    "M111 160Q125 146 143 157Q159 147 176 159", "valve", 5],
-  ["mitral", t("Mitrální chlopeň"), "Valva mitralis", t("Otevírá se z levé síně do levé komory při plnění. Při stahu komory uzávěr brání návratu krve do síně."), [274,152,2.4],
-    "M243 158Q258 150 273 155Q289 146 306 157", "valve", 5],
-  ["pulmonary-valve", t("Pulmonální chlopeň"), "Valva trunci pulmonalis", t("Leží na výstupu z pravé komory do plicního kmene. Po vypuzení krve se uzavře a brání zpětnému toku do komory."), [188,130,2.65],
-    "M179 128Q190 137 199 128", "valve", 5],
-  ["aortic-valve", t("Aortální chlopeň"), "Valva aortae", t("Leží mezi levou komorou a aortou. Při uvolnění komory uzávěr brání návratu krve z aorty."), [218,150,2.65],
-    "M206 149Q218 158 231 148", "valve", 5],
+  ["tricuspid", t("Trojcípá chlopeň"), "Valva tricuspidalis", t("Otevírá se z pravé síně do pravé komory při plnění. Při stahu komory uzávěr brání návratu krve do síně."), [165,459,2.35],
+    "M133 484C152 454 174 446 202 458 M189 402C181 426 203 445 231 467", 18],
+  ["mitral", t("Mitrální chlopeň"), "Valva mitralis", t("Otevírá se z levé síně do levé komory při plnění. Při stahu komory uzávěr brání návratu krve do síně."), [377,315,2.4],
+    "M337 320C348 328 357 350 360 367 M374 319C384 300 394 300 405 308", 16],
+  ["pulmonary-valve", t("Pulmonální chlopeň"), "Valva trunci pulmonalis", t("Leží na výstupu z pravé komory do plicního kmene. Po vypuzení krve se uzavře a brání zpětnému toku do komory."), [235,368,2.55],
+    "M207 371C218 346 254 347 264 380 M212 381C224 386 232 375 234 369 M238 369C248 389 259 390 267 380", 14],
+  ["aortic-valve", t("Aortální chlopeň"), "Valva aortae", t("Leží mezi levou komorou a aortou. Při uvolnění komory uzávěr brání návratu krve z aorty."), [302,351,2.55],
+    "M275 370C272 347 287 328 309 329C328 329 337 343 331 357 M279 379C300 388 301 367 293 359 M298 345C310 355 325 342 317 334", 14],
 ];
 const walls = [
-  ["septum", t("Mezikomorová přepážka"), "Septum interventriculare", t("Odděluje pravou a levou komoru. V její svalové části vedou raménka převodního systému směrem ke komorám."), [198,219,2.25],
-    "M197 171C189 205 189 239 212 279", "wall", 13],
-  ["myocardium", t("Srdeční svalovina"), "Myocardium", t("Svalové buňky se při elektrické aktivaci depolarizují a potom se stahují. Jejich souhra vytváří tlak, který pohání krev."), [295,250,1.95],
-    "M274 270Q296 240 307 211", "wall", 9],
+  ["septum", t("Mezikomorová přepážka"), "Septum interventriculare", t("Odděluje pravou a levou komoru. V její svalové části vedou raménka převodního systému směrem ke komorám."), [327,475,2.05],
+    "M269 399C275 437 315 480 331 513C342 533 349 550 366 564", 23],
+  ["myocardium", t("Srdeční svalovina"), "Myocardium", t("Svalové buňky se při elektrické aktivaci depolarizují a potom se stahují. Jejich souhra vytváří tlak, který pohání krev."), [463,494,1.85],
+    "M415 327C445 373 465 394 470 449C483 530 451 565 416 578", 20],
+  ["tendinous-cords", t("Šlašinky"), "Chordae tendineae", t("Spojují cípy mitrální a trojcípé chlopně s papilárními svaly. Při stahu komor se napnou a omezují vyvrácení cípů do síní."), [365,391,2.45],
+    "M349 343C356 361 363 396 368 428 M376 339C380 363 392 401 403 425", 13],
+  ["papillary-muscles", t("Papilární svaly"), "Musculi papillares", t("Vybíhají ze stěny komor. Při systole se stahují společně se svalovinou komor a přes šlašinky stabilizují cípy chlopní."), [413,510,2.3],
+    "M401 444C421 468 430 495 417 523 M360 439L398 518", 21],
 ];
 const groups = [chambers, valves, vessels, walls];
 const parts = groups.flat();
 const byId = new Map(parts.map(part => [part[0], part]));
 
 function anatomyShape(part) {
-  const [id, , , , , path, color, width] = part;
-  return `<path class="anatomy-shape anatomy-${color}" data-structure="${id}" d="${path}" ${width ? `stroke-width="${width}" fill="none"` : 'stroke-width="2"'}/>`;
+  const [id, , , , , path, width] = part;
+  return `<path class="anatomy-shape" data-structure="${id}" d="${path}" ${width ? `stroke-width="${width}" fill="none"` : 'stroke-width="2"'}/>`;
 }
 
 function anatomyMarker([id, name, , , [x, y]]) {
   return `<g class="anatomy-marker" data-marker="${id}" role="button" tabindex="0" aria-label="${name}" aria-pressed="false" transform="translate(${x} ${y})">
-    <title>${name}</title><circle class="marker-hit" r="13.5"/><circle class="marker-ring" r="4.8"/><circle class="marker-core" r="1.7"/>
+    <title>${name}</title><circle class="marker-hit" r="20"/><circle class="marker-ring" r="8.7"/><circle class="marker-core" r="3.2"/>
   </g>`;
 }
 
@@ -114,13 +118,10 @@ export function anatomyExplorer() {
     <p class="muted">Vyber bod v řezu srdcem nebo název v seznamu. Model se přiblíží na vybranou část.</p>
     <div class="anatomy-layout">
       <div class="anatomy-stage">
-        <svg id="anatomy-map" viewBox="0 0 400 325" role="group" aria-label="Řez srdcem s interaktivními body">
-          <defs><pattern id="anatomy-grid" patternUnits="userSpaceOnUse" width="16" height="16"><path d="M16 0H0V16" fill="none" stroke="var(--plot-grid-fine)" stroke-width="1"/></pattern></defs>
-          <rect width="400" height="325" fill="url(#anatomy-grid)" aria-hidden="true"/>
+        <svg id="anatomy-map" viewBox="0 0 ${cutaway.width} ${cutaway.height}" role="group" aria-label="Řez srdcem s interaktivními body">
           <g class="anatomy-camera">
-            ${vessels.map(anatomyShape).join("")}
-            <path d="${outline}" fill="var(--map-fill)" stroke="var(--map-stroke)" stroke-width="2" aria-hidden="true"/>
-            ${[...chambers, ...walls, ...valves].map(anatomyShape).join("")}
+            <image href="assets/heart-cutaway.svg" width="${cutaway.width}" height="${cutaway.height}" class="anatomy-art" aria-hidden="true"/>
+            ${[...vessels, ...chambers, ...walls, ...valves].map(anatomyShape).join("")}
             ${parts.map(anatomyMarker).join("")}
           </g>
         </svg>
@@ -138,6 +139,7 @@ export function anatomyExplorer() {
           <p id="heart-function">V řezu jsou vidět čtyři dutiny, chlopně a velké cévy. Pravá strana srdce je v obrázku vlevo.</p>
         </div>
         <p class="source"><a href="https://www.nhlbi.nih.gov/health/heart/anatomy">Anatomie srdce · NHLBI</a></p>
+        <p class="source anatomy-credit">Ilustrace: <a href="https://commons.wikimedia.org/wiki/File:Diagram_of_the_human_heart_(no_labels).svg">Wapcaplet, Stenemo a Jmarchn</a> · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a></p>
       </div>
     </div>
   </section>`;
@@ -159,8 +161,9 @@ export function mountAnatomyExplorer(target) {
     picker.value = id;
     reset.disabled = !part;
     svg.classList.toggle("anatomy-zoomed", Boolean(part));
-    const [x, y, scale] = part?.[4] ?? [200, 162.5, 1];
-    camera.style.transform = `translate(${200 - x * scale}px, ${162.5 - y * scale}px) scale(${scale})`;
+    const cx = cutaway.width / 2, cy = cutaway.height / 2;
+    const [x, y, scale] = part?.[4] ?? [cx, cy, 1];
+    camera.style.transform = `translate(${cx - x * scale}px, ${cy - y * scale}px) scale(${scale})`;
 
     for (const marker of markers) {
       const active = marker.dataset.marker === id;

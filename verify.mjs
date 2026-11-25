@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { atlas, normalCycle, sample } from "./rhythms.js";
+import { atlas, measureRhythm, normalCycle, sample } from "./rhythms.js";
 import { cumulative, longIntervals, matchPeaks, timeStats, welch } from "./analysis.js";
 
 const close = (actual, expected, epsilon = 1e-9) => {
@@ -17,6 +17,14 @@ const av = atlas.mobitz1.events;
 [.16,.22,.26].forEach((value, i) => close(av.q[i].t - av.p[i].t, value));
 assert.ok(!av.q.some(event => event.p === av.p[3].t));
 close(av.q[3].t - av.p[4].t, .16);
+const measured = (name, lead = "II") => measureRhythm(atlas[name].events, atlas[name].duration, lead);
+assert.deepEqual([...new Set(measured("mobitz1").pr)], [160, 220, 260]);
+assert.deepEqual([...new Set(measured("mobitz2").pr)], [170]);
+assert.deepEqual(measured("av3").pr, []);
+assert.equal(measured("av3").otherQrs.length, 5);
+assert.deepEqual([...new Set(measured("rbbb", "V1").widths)], [148]);
+assert.deepEqual([...new Set(measured("rbbb", "V6").widths)], [150]);
+assert.deepEqual([...new Set(measured("bigeminy").rr)], [540, 1180]);
 for (const scene of Object.values(atlas)) {
   assert.ok(scene.events.q.filter(event => event.t < scene.duration).length >= 3, scene.name);
   for (const lead of scene.leads) {
