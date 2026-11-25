@@ -1,0 +1,4 @@
+.DS_Store
+__pycache__/
+PLAN-A-PROMPT.md
+dist/

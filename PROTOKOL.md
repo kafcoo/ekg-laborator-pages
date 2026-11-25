@@ -1,0 +1,22 @@
+# Protokol kontroly EKG laboratoře
+
+Kontrolu provedl Codex. Ověření zahrnuje porovnání s materiály kurzu, deterministické kontroly v `verify.mjs`, přepočet signálů v SciPy a uživatelský průchod v Chromu přes lokální HTTP server.
+
+| Položka | Očekávání | Výsledek |
+| --- | --- | --- |
+| Podklady | Projít prezentace i obrazové příklady, oba zkouškové listy, zápočet a relevantní notebooky. | Pročteno 9 souborů z `prednasky/`, zápočtový PDF, kořenový přehled a notebooky ke zpracování a optice. Obrazová kontrola zahrnula rytmové proužky a žebříčky z Arytmologie i výbrané snímky dalších přednášek. Obě strany okruhů jsou mapované v lekci Osnova a zdroje. |
+| Převod a sinusový rytmus | P od 120 ms, QRS od 280 ms, T až po ST. Viditelný rozdíl mezi mapou a měřitelnými vlnami. | V modelu je PQ 160 ms a QRS 90 ms. Krokování a kurzor zobrazeny na společné časové ose, včetně repolarizace a poznámek o SA a Hisově svazku. |
+| Pilot atlasu | Svod II, napětí v mV, čas v s, stejný rozsah v páru. Časná extrasystola a postupný AV výpadek mají odlišné demonstrace. | U PVC je modelový QRS v 1,930 s místo referenčních 2,190 s a okolní normální QRS jsou 1,720 s od sebe. U Mobitz I je PQ 160, 220 a 260 ms, pak je P bez QRS, následované PQ 160 ms. Konfrontováno s Arytmologií, sn. 20–23 a 49–54. |
+| Rozšířený atlas | Každá karta má odkaz na snímky, zobrazuje alespoň tři QRS a používá společné osy pro referenci a příklad. | Zkontrolováno 28 syntetických karet. U ramének jsou páry V1/V6, u fasciklů aVL/aVF. Žebříčky oddělují značky P/QRS od odvozených spojů. Rozdíly v terminologii u převodu 2:1 a preexcitace mají odkaz na odborný zdroj. |
+| Filtrace | Počet vzorků a jednotky odpovídají měření. Zádrž sníží síťovou složku, příliš vysoká horní propust změní pomalé části. | 41 355 vzorků, 1 000 Hz, mV podle notebooku. Špička kolem 50 Hz je výrazná zejména mezi 21 a 30 s. Po zádrži byl koeficient 50 Hz v úseku 22–28 s přibližně 0,167 % vstupní amplitudy. Horní propust 5 Hz je dostupná k porovnání tvaru. Rozhraní úseků 10, 20 a 30 s jsou nominální. |
+| Detekce | Unikátní páry v toleranci ±100 ms a oddělené hodnocení neanotovaného měření. | Syntetický zašuměný signál má 19 referenčních značek. Pan–Tompkins: 18 TP, 0 FP, 1 FN. Hamilton: 18 TP, 1 FP, 1 FN. Oba v úloze minou slabý široký komplex v 8,040 s. Ve svalovém rušení jsou v adaptačním algoritmu dva dohledané kandidáty. Měření ukazuje shodu mezi algoritmy. |
+| HRV | Ruční výsledek souhlasí, vynechaný R slučuje intervaly, spektrum má ověřitelné složky. | Pro 800, 850, 800 a 850 ms je SDNN 28,87 ms, RMSSD 50 ms a NN50 = 0. Vynechaný R spojí dvojici intervalů na 1 650 ms. U známé ektopie se vyřadí oba sousední RR. Pětiminutový model dává vrcholy okolo 0,102 Hz a 0,242 Hz. Soubor `rr.txt` má 73 hodnot a po interpretaci v ms trvá 7,594 s. |
+| Optická data | Připravený soubor odpovídá původním rozměrům. Volba pixelu propojí snímek a časovou stopu. | Rozměry 100 × 100 × 205, hodnoty byly přeneseny beze ztráty a otočeny jako v notebooku. Měřená hodnota, rozdíl proti základu, odhad aktivace a schematický AP jsou označené samostatně. |
+| Uživatelský průchod | Spuštění ze složky aplikace, klávesnice, široké a úzké rozložení, cesta od měření k intervalům. | Ověřeno v Chromu při šířkách 1 440 a 390 px. Zkouška zahrnula přeskok na obsah, krokování klávesnicí, všechny stránky a přenos detekcí do HRV. |
+
+## Otevřené otázky pro vyučujícího
+
+- **Softwarová akvizice.** V sadě chybí samostatné slajdy k nadvzorkování a kompresi. Výklad doplňují technické podklady [Analog Devices](https://www.analog.com/en/resources/app-notes/an-2003.html) a [AHA](https://doi.org/10.1016/j.jacc.2007.01.024). Po dodání prezentace lze sladit rozsah s kurzem.
+- **Atlas a detekce.** Atlas je syntetický. Učitel by měl posoudit morfologii a zakreslené místo převodu zvlášť u atypických drah, SA blokád a fasciklů. Výuková adaptace detektoru používá jeden rozhodovací kanál a lokální dohledání. Výsledky představují kontrolu zadané syntetické úlohy.
+- **Místní záznamy.** EKG ze cvičení nemá ověřené anotace ani přesný zápis přepnutí rušení. U `rr.txt` je omezená délka a nedoložený biologický původ NN. U optiky chybí snímková frekvence a kalibrace intenzity, takže čas aktivace a optický AP zůstávají výukově odvozené.
+- **Délka pro HRV.** SDANN a SDNN index, TINN a pokročilé nelineární metody mají v lekci popsaný princip, vstup a výstup. K výpočtu na reálných datech je potřeba příslušný delší, kvalitou doložený NN záznam a odborné posouzení.
