@@ -185,5 +185,12 @@ footer { margin-top: 1.4rem; border-top: 1px solid var(--line); padding-top: .85
 
 @media (max-width: 480px) {
   .topline { flex-wrap: wrap; gap: .4rem .75rem; }
-  .topline-actions { margin-inline-start: auto; }
+}
+
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+#language-select { font-size: .87rem; }
+
+@media (max-width: 480px) {
+  #section-name { display: none; }
+  .topline-actions { width: 100%; margin-inline-start: 0; justify-content: space-between; gap: .5rem; }
 }

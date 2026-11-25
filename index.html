@@ -17,17 +17,17 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <a class="skip" href="#obsah">Přeskočit na obsah</a>
+  <a class="skip" href="#obsah" data-i18n>Přeskočit na obsah</a>
   <div class="layout">
     <aside class="sidebar">
-      <a class="brand" href="#vedeni"><span class="brand-icon" aria-hidden="true">⌁</span><span><strong>EKG laboratoř</strong><small>MPC-DVK</small></span></a>
-      <nav aria-label="Lekce" id="nav"></nav>
-      <div class="sidebar-foot">Studijní aplikace<br><small>Fyziologie a zpracování EKG</small></div>
+      <a class="brand" href="#vedeni"><span class="brand-icon" aria-hidden="true">⌁</span><span><strong data-i18n>EKG laboratoř</strong><small>MPC-DVK</small></span></a>
+      <nav data-i18n-label aria-label="Lekce" id="nav"></nav>
+      <div class="sidebar-foot"><span data-i18n>Studijní aplikace</span><br><small data-i18n>Fyziologie a zpracování EKG</small></div>
     </aside>
     <main id="obsah" tabindex="-1">
-      <div class="topline"><span id="section-name"></span><div class="topline-actions"><a href="#zdroje">Osnova a zdroje</a><button id="theme-toggle" type="button" hidden>Tmavý režim</button></div></div>
+      <div class="topline"><span id="section-name"></span><div class="topline-actions"><a href="#zdroje" data-i18n>Osnova a zdroje</a><label for="language-select" class="visually-hidden" data-i18n>Jazyk</label><select id="language-select" hidden><option value="cs" lang="cs">Čeština</option><option value="en" lang="en">English</option></select><button id="theme-toggle" type="button" hidden>Tmavý režim</button></div></div>
       <div id="view"></div>
-      <footer>MPC-DVK · Výuková schémata a data ze cvičení</footer>
+      <footer data-i18n>MPC-DVK · Výuková schémata a data ze cvičení</footer>
     </main>
   </div>
   <script type="module" src="app.js"></script>
