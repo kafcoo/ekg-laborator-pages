@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#17181c">
+  <meta name="description" content="Interaktivní výuková laboratoř EKG pro předmět MPC-DVK.">
+  <title>EKG laboratoř · MPC-DVK</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2341262e'/%3E%3Cpath d='M5 17h6l3-8 4 14 3-6h6' fill='none' stroke='%23ff818c' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <script>
+    let savedTheme;
+    try { savedTheme = localStorage.getItem("ekg-theme"); } catch {}
+    document.documentElement.dataset.theme = savedTheme === "light" || savedTheme === "dark"
+      ? savedTheme
+      : matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  </script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip" href="#obsah">Přeskočit na obsah</a>
+  <div class="layout">
+    <aside class="sidebar">
+      <a class="brand" href="#vedeni"><span class="brand-icon" aria-hidden="true">⌁</span><span><strong>EKG laboratoř</strong><small>MPC-DVK</small></span></a>
+      <nav aria-label="Lekce" id="nav"></nav>
+      <div class="sidebar-foot">Studijní aplikace<br><small>Fyziologie a zpracování EKG</small></div>
+    </aside>
+    <main id="obsah" tabindex="-1">
+      <div class="topline"><span id="section-name"></span><div class="topline-actions"><a href="#zdroje">Osnova a zdroje</a><button id="theme-toggle" type="button" hidden>Tmavý režim</button></div></div>
+      <div id="view"></div>
+      <footer>MPC-DVK · Výuková schémata a data ze cvičení</footer>
+    </main>
+  </div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
